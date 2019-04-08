@@ -237,13 +237,6 @@ def Constrained_kMeans(datafile):
 
         return ""
 
-    def distance(c1,c2):
-
-        return ""
-
-    def initial_centorids():
-
-        return ""
     def closed_centorids(vec):
 
         return ""
