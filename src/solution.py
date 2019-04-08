@@ -14,6 +14,7 @@ from pyspark.ml.feature import StringIndexer, VectorAssembler, OneHotEncoderEsti
 from pyspark.sql import DataFrame
 from pyspark.sql import SparkSession
 import sklearn as sk
+from pyspark.sql.types import IntegerType
 from sklearn import metrics
 from sklearn import preprocessing
 from sklearn.cluster import KMeans
@@ -79,9 +80,9 @@ categorical_features=[
     ,"first_browser"
     ,"country_destination"]
 
-numberical_feature=["date_account_created"
-    ,"timestamp_first_active","age","signup_flow"]
-
+# numberical_feature=["date_account_created"
+#     ,"timestamp_first_active","age","signup_flow"]
+numberical_feature=["age"]
 
 #Initialize a spark session.
 def init_spark():
@@ -165,8 +166,8 @@ def one_hot(datafile):
     df1=df.select(
     #     "date_account_created"
     # ,"timestamp_first_active",
+        "age",
     "gender"
-    ,"age"
     ,"signup_method"
     ,"signup_flow"
     ,"language"
@@ -183,6 +184,7 @@ def one_hot(datafile):
     # df3=df2.withColumn("age", when(df["age"]<=17, age_average).otherwise(df["age"]))
     # indexers = [StringIndexer(inputCol="gender", outputCol="gender_numeric").fit(df2)]
     df3=df2.dropna()
+    data_df= df3.withColumn("age", df3["age"].cast(IntegerType()))
 
     indexers = [StringIndexer(inputCol=column, outputCol=column + "_index") for column in categorical_features]
 
@@ -202,8 +204,8 @@ def one_hot(datafile):
         outputCol="num_features"
     )
 
-    pipeline = Pipeline(stages=indexers+[encoder,assembler])
-    df_r = pipeline.fit(df2).transform(df2)
+    pipeline = Pipeline(stages=indexers+[encoder,assembler,assembler2])
+    df_r = pipeline.fit(data_df).transform(data_df)
     # df_r.show()
 
 
@@ -222,18 +224,26 @@ def normalization(data_file):
     return df
 
 
-def Constrained_kMeans(datafile):
+def Constrained_seed_kMeans(datafile):
     spark = init_spark()
     df = one_hot(datafile)
+    print()
     scaler = MinMaxScaler(inputCol="cat_features", outputCol="scaledFeatures")
     # Compute summary statistics and generate MinMaxScalerModel
     scalerModel = scaler.fit(df)
     scaledData = scalerModel.transform(df)
     # print("Features scaled to range: [%f, %f]" % (scaler.getMin(), scaler.getMax()))
     # scaledData.select("cat_features", "scaledFeatures").show()
-    rdd=scaledData.rdd
+    input=scaledData.select("country_destination","scaledFeatures","num_features")
+    print(input.show())
+    x=input.rdd.map(lambda x:(x[0],(x[1],x[2]))).reduceByKey(lambda x,y:x+y).collect()
+    print(len(x))
 
+    all_states=[["US","other","FR","IT","GB","ES","CA","DE","NL","AU","PT"]]
     def initial_centorids():
+        centroids=[]
+        # us_rdd=rdd.
+        # print(us_rdd)
 
         return ""
 
@@ -241,12 +251,13 @@ def Constrained_kMeans(datafile):
 
         return ""
 
+    initial_centorids()
 
     return ""
 
-Constrained_kMeans("../data/train_users_2.csv")
+Constrained_seed_kMeans("../data/train_users_2.csv")
 
-#213451
+
 def filling_missing(datafile):
     df=pd.read_csv(datafile)
     df=df.loc[:,all_features]
@@ -312,13 +323,6 @@ def imbalance_undersampling(datafile):
 
 
 
-
-
-
-
-
-
-
 # https://towardsdatascience.com/random-forest-in-python-24d0893d51c0
 def classifier_RF(data_file):
     # data=filling_missing(data_file)0.662842488864894%
@@ -344,25 +348,7 @@ def classifier_RF(data_file):
 
 # classifier_RF("../data/train_users_2.csv")
 
-from pyclustering.cluster.kmeans import kmeans
-from pyclustering.utils.metric import type_metric, distance_metric
 
-def costomize_distance_KM(vec1,vec2):
-    #
-    # user_function = lambda point1, point2: point1[0] + point2[0] + 2
-    # metric = distance_metric(type_metric.USER_DEFINED, func=user_function)
-    #
-    # # create K-Means algorithm with specific distance metric
-    # start_centers = [[4.7, 5.9], [5.7, 6.5]];
-    # kmeans_instance = kmeans(sample, start_centers, metric=metric)
-    #
-    # # run cluster analysis and obtain results
-    # kmeans_instance.process()
-    # clusters = kmeans_instance.get_clusters()
-
-    return " "
-
-# normalization("../data/train_users_2.csv")
 
 
 def normalization(data_file):
@@ -421,13 +407,7 @@ def classifier_KM(datafile):
     # model = KMeans(n_clusters=11)
     # result=model.fit_predict(df)
     # centers=model.cluster_centers_
-    #
-    #
-    # cluster_map = pd.DataFrame()
-    # cluster_map['data_index'] = df.index.values
-    # cluster_map['cluster'] = model.labels_
-    # print(cluster_map )
-    # for cen in centroid_list:
+
 
     return df
 
