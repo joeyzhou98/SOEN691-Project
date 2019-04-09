@@ -130,7 +130,6 @@ def remove_all_missing(datafile):
     return df
 # remove_all_missing("../data/train_users_2.csv")
 
-
 def undersampling(datafile):
     # undersampling according to the size of other class
     data = remove_all_missing(datafile)
